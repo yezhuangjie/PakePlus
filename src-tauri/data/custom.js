@@ -30,29 +30,58 @@ document.addEventListener('click', hookClick, { capture: true })
 
 
 //以下为新添加
-document.addEventListener('click', function(e) {
-  // 获取被点击的链接元素（处理点击链接内部子元素的情况）
-  const link = e.target.closest('a');
-  
-  // 基础校验：确保存在链接且含有 href
-  if (!link || !link.href) return;
-
-  // 判断是否为 http 或 https 协议的外部链接
-  const isHttpLink = link.href.startsWith('http://') || link.href.startsWith('https://');
-
-  if (isHttpLink) {
-    // 阻止 WebView 内部的默认跳转行为
-    e.preventDefault();
-    
-    // 安全调用 Tauri Shell API 在外部浏览器打开
-    if (window.__TAURI__ && window.__TAURI__.shell) {
-      window.__TAURI__.shell.open(link.href).catch(err => {
-        console.error('Failed to open link in external browser:', err);
-      });
-    } else {
-      // 非 Tauri 环境（如普通浏览器调试）的降级处理
-      window.open(link.href, '_blank');
+// 确保在 DOM 加载后执行
+document.addEventListener('DOMContentLoaded', function() {
+  // 1. 定义打开外部链接的方法（优先使用 PakePlus 的 API，其次 Tauri 的 shell）
+  function openExternal(url) {
+    // 尝试 PakePlus 的全局方法（如果有）
+    if (window.pake && typeof window.pake.openExternal === 'function') {
+      window.pake.openExternal(url);
+      return;
     }
+    // 尝试 Tauri 的 shell (需要 @tauri-apps/api)
+    if (window.__TAURI__ && window.__TAURI__.shell) {
+      window.__TAURI__.shell.open(url);
+      return;
+    }
+    // 尝试 invoke 自定义命令
+    if (window.__TAURI__ && window.__TAURI__.core) {
+      window.__TAURI__.core.invoke('open_url', { url: url }).catch(err => {
+        console.error('invoke open_url failed:', err);
+        // 如果失败，回退到默认行为（新窗口，但可能还是应用内）
+        window.open(url, '_blank');
+      });
+      return;
+    }
+    // 最后的回退：使用 window.open
+    window.open(url, '_blank');
   }
-}, true); // 使用捕获阶段监听，确保优先于页面其他脚本执行
 
+  // 2. 拦截所有点击事件（捕获阶段）
+  document.addEventListener('click', function(e) {
+    const anchor = e.target.closest('a');
+    if (!anchor) return;
+    const href = anchor.href;
+    if (!href) return;
+    // 判断是否应该外部打开：target="_blank" 或 base[target="_blank"] 或带有特定类（可选）
+    const isBlank = (anchor.target === '_blank') || 
+                    document.querySelector('head base[target="_blank"]');
+    if (isBlank) {
+      e.preventDefault();
+      e.stopPropagation(); // 阻止其他监听器
+      openExternal(href);
+    }
+  }, { capture: true });
+
+  // 3. 覆盖 window.open（作为第二道防线）
+  const originalOpen = window.open;
+  window.open = function(url, target, features) {
+    // 如果 target 是 _blank 或者未指定，则视为外部打开
+    if (target === '_blank' || target === undefined) {
+      openExternal(url);
+      return null;
+    }
+    // 否则调用原生的 window.open
+    return originalOpen.call(this, url, target, features);
+  };
+});
