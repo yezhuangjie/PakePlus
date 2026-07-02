@@ -1,4 +1,5 @@
-window.addEventListener("DOMContentLoaded",()=>{const t=document.createElement("script");t.src="https://www.googletagmanager.com/gtag/js?id=G-W5GKHM0893",t.async=!0,document.head.appendChild(t);const n=document.createElement("script");n.textContent="window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-W5GKHM0893');",document.body.appendChild(n)});document.addEventListener('click', (e) => {
+window.addEventListener("DOMContentLoaded",()=>{const t=document.createElement("script");t.src="https://www.googletagmanager.com/gtag/js?id=G-W5GKHM0893",t.async=!0,document.head.appendChild(t);const n=document.createElement("script");n.textContent="window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', 'G-W5GKHM0893');",document.body.appendChild(n)});document.addEventListener('click', (e) => { 
+  
   const anchor = e.target.closest('a');
   if (!anchor || anchor.target !== '_blank') return;
 
@@ -10,8 +11,8 @@ window.addEventListener("DOMContentLoaded",()=>{const t=document.createElement("
   const label = `window_${Date.now()}`; // 确保每个窗口 label 唯一
   const webview = new WebviewWindow(label, {
     url: url,
-    width: 800,
-    height: 600,
+    width: 1000,
+    height: 800,
     center: true,
     resizable: true,
     title: anchor.textContent || '新窗口',
@@ -23,3 +24,4 @@ window.addEventListener("DOMContentLoaded",()=>{const t=document.createElement("
     console.error('创建窗口失败:', e);
   });
 });
+
