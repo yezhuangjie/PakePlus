@@ -11,7 +11,7 @@ window.addEventListener("DOMContentLoaded",()=>{const t=document.createElement("
   const label = `window_${Date.now()}`; // 确保每个窗口 label 唯一
   const webview = new WebviewWindow(label, {
     url: url,
-    width: 1000,
+    width: 1100,
     height: 800,
     center: true,
     resizable: true,
